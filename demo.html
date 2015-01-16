@@ -1,0 +1,52 @@
+<!--
+    @license
+    Copyright (c) 2015 Renato Utsch. All rights reserved.
+    This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+-->
+
+<!doctype html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1.0, user-scalable=yes">
+  <title>poly-cloud Demo</title>
+
+  <script src="../webcomponentsjs/webcomponents.min.js"></script>
+  <link rel="import" href="poly-cloud.html">
+
+</head>
+<body unresolved>
+
+  <p>
+      An example of using <code>&lt;poly-cloud&gt;</code>, showing how to change
+      the cloud after the creation of the cloud.
+  </p>
+  <polymer-element name="changing-poly-cloud" extends="poly-cloud">
+    <script>
+      Polymer({
+        url: 'demo.json',
+        ready: function() {
+            this.super();
+
+            var self = this;
+            setTimeout(function() {
+              // You can also change the url attribute and it will automatically make
+              // a new request with the new url and change the word cloud to represent
+              // the new data.
+              // This is just random data.
+              self.data = ["Hello", "world", "normally", "you", "want", "more", "words",
+                "than", "this"].map(function(d) {
+                  return {text: d, size: 10 + Math.random() * 90};
+                });
+            }, 3000);
+        }
+      });
+    </script>
+  </polymer-element>
+  <changing-poly-cloud></changing-poly-cloud>
+
+  <p>An example of using <code>&lt;poly-cloud&gt;</code>, loaded from an url:</p>
+
+  <poly-cloud url='demo.json'></poly-cloud>
+
+</body>
+</html>
