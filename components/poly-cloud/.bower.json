@@ -1,0 +1,40 @@
+{
+  "name": "poly-cloud",
+  "authors": [
+    "Renato Utsch <renatoutsch@gmail.com>"
+  ],
+  "description": "A polymer wrapper for d3-cloud.",
+  "keywords": [
+    "web-component",
+    "web-components",
+    "polymer",
+    "d3-cloud",
+    "d3"
+  ],
+  "main": "poly-cloud.html",
+  "license": "BSD",
+  "homepage": "https://github.com/RenatoUtsch/poly-cloud/",
+  "ignore": [
+    "/.*",
+    "/tests/"
+  ],
+  "dependencies": {
+    "polymer": "~0.5.2",
+    "core-ajax": "Polymer/core-ajax#~0.5.2",
+    "d3": "~3.5.3",
+    "d3-cloud": "~1.0.5"
+  },
+  "devDependencies": {
+    "web-component-tester": "Polymer/web-component-tester#^2.0.5"
+  },
+  "_release": "178872781b",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "178872781b5a9267a710786b8890f0dad8d4fa05"
+  },
+  "_source": "git://github.com/renatoutsch/poly-cloud.git",
+  "_target": "master",
+  "_originalSource": "renatoutsch/poly-cloud",
+  "_direct": true
+}

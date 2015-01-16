@@ -1,0 +1,7 @@
+{
+  "name": "poly-cloud#gh-pages",
+  "private": true,
+  "dependencies": {
+    "poly-cloud": "renatoutsch/poly-cloud#master"
+  }
+}
