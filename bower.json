@@ -1,6 +1,6 @@
 {
   "name": "poly-cloud",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "authors": [
     "Renato Utsch <renatoutsch@gmail.com>"
   ],
@@ -22,7 +22,7 @@
   "dependencies": {
     "polymer": "~0.5.2",
     "core-ajax": "Polymer/core-ajax#~0.5.2",
-    "d3": "~3.5.3",
+    "d3": "^3.3.13",
     "d3-cloud": "~1.0.5"
   },
   "devDependencies": {
