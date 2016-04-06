@@ -20,12 +20,12 @@
     "/tests/"
   ],
   "dependencies": {
-    "polymer": "~0.5.2",
-    "core-ajax": "Polymer/core-ajax#~0.5.2",
-    "d3": "^3.3.13",
-    "d3-cloud": "~1.0.5"
+    "polymer": "~1.4.0",
+    "iron-ajax": "PolymerElements/iron-ajax#~1.2.0",
+    "d3": "~3.5.0",
+    "d3-cloud": "~1.2.0"
   },
   "devDependencies": {
-    "web-component-tester": "Polymer/web-component-tester#^2.0.5"
+    "iron-component-page": "PolymerElements/iron-component-page#~1.1.5"
   }
 }
