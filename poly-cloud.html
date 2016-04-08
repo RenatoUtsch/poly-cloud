@@ -3,8 +3,8 @@
     Copyright (c) 2015 Renato Utsch. All rights reserved.
     This code may only be used under the BSD style license found at http://renatoutsch.github.io/LICENSE.txt
 -->
-<link rel="import" href="./bower_components/polymer/polymer.html">
-<link rel="import" href="./bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="./bower_components/polymer/polymer.html" />
+<link rel="import" href="./bower_components/iron-ajax/iron-ajax.html" />
 <script src="./bower_components/d3/d3.min.js" type="text/javascript" charset="utf-8"></script>
 <script src="./bower_components/d3-cloud/build/d3.layout.cloud.js" charset="utf-8"></script>
 
@@ -23,8 +23,7 @@ Default structure of the json used by the poly-cloud:
         {"text": "Windows", "size": 20}
     ]
 
-You can customize the json structure by extending the poly-cloud and
-reimplementing the `text` and `fontSize` methods.
+You may change `rotate` function to generate random rotations.
 
 @element poly-cloud
 @blurb A Polymer wrapper for the d3-cloud word cloud layout for d3.
@@ -33,24 +32,21 @@ reimplementing the `text` and `fontSize` methods.
 -->
 <dom-module id="poly-cloud">
     <template>
-        <style>
-            #svg text {
+        <style type="text/css">
+            #svg .word {
                 text-anchor: middle;
-                font-size: 15px !important;
-                @apply(--poly-cloud-text-style);
+                @apply(--poly-cloud-word);
             }
 
-            #svg text:hover {
-                @apply(--poly-cloud-text-hover-style);
+            #svg .word:hover {
+                @apply(--poly-cloud-word-hover);
             }
         </style>
         <iron-ajax auto url="{{url}}" id="ajax" params="{{params}}"
             on-response="_setData" handle-as="json"></iron-ajax>
 
-        <div>
-            <svg id="svg" viewBox="{{viewBox}}"
-                preserveAspectRatio="xMidYMid meet"></svg>
-        </div>
+        <svg id="svg" viewBox="{{viewBox}}" preserveAspectRatio="xMidYMid meet">
+        </svg>
     </template>
     <script>
         Polymer({
@@ -145,7 +141,7 @@ reimplementing the `text` and `fontSize` methods.
                  *
                  * @attribute fill
                  * @type Object
-                 * @default d3.scale.category20()
+                 * @default d3.scale.category20
                  */
                 fill: {
                     type: Object,
@@ -156,7 +152,7 @@ reimplementing the `text` and `fontSize` methods.
                  * Font of the word cloud.
                  *
                  * @attribute font
-                 * @type string
+                 * @type String
                  * @default "Impact"
                  */
                 font: {
@@ -168,7 +164,7 @@ reimplementing the `text` and `fontSize` methods.
                  * Transition duration when creating a new word cloud.
                  *
                  * @attribute transition
-                 * @type number
+                 * @type Number
                  * @default 300
                  */
                 transition: {
@@ -177,17 +173,52 @@ reimplementing the `text` and `fontSize` methods.
                 },
 
                 /**
-                 * Function used to generate random rotations to the words.
+                 * Function used to generate rotations to the words.
+                 * Just replace this function to create another rotation
+                 * patterns.
+                 *
                  * Note: '~~' converts the number to integer.
                  *
-                 * @type {Function}
+                 * @attribute rotate
+                 * @type object
+                 * @default `() => { return -(180) / 8 }`
+                 *
                  */
                 rotate: {
-                    type: Function,
+                    type: Object,
                     value: function () {
                         return function () {
-                            return ~~((Math.random() * 2) * 90);
+                            return -(180) / 8;
                         }
+                    }
+                },
+
+                /**
+                 * d3-cloud layout engine.
+                 *
+                 * @attribute _layout
+                 * @type Object
+                 * @default d3.layout.cloud()
+                 */
+                _layout: {
+                    type: Object,
+                    value: function () {
+                        return d3.layout.cloud();
+                    }
+                },
+
+
+                /**
+                 * Used to scale the words properly.
+                 *
+                 * @attribute _scale
+                 * @type object
+                 * @default d3.scale.linear()
+                 */
+                _scale: {
+                    type: Object,
+                    value: function () {
+                        return d3.scale.linear();
                     }
                 }
             },
@@ -210,17 +241,11 @@ reimplementing the `text` and `fontSize` methods.
             },
 
             /**
-             * d3-cloud layout engine
-             * @type {Object}
+             * Observers D3's changes to the world cloud and applies the
+             * styling properly.
              */
-            _layout: null,
-
-
-            /**
-             * Starts d3-cloud's layout.
-             */
-            created: function() {
-                this.layout = d3.layout.cloud();
+            ready: function() {
+                this.scopeSubtree(this.$.svg, true);
             },
 
             /**
@@ -236,12 +261,31 @@ reimplementing the `text` and `fontSize` methods.
              * Draws the word cloud with the data from this.data
              */
             drawCloud: function() {
+                function words(word) {
+                    return {
+                        text: word.text,
+                        size: word.size
+                    };
+                }
+
                 function fireWordClicked(detail) {
                     this.fire('word-clicked', detail);
                 }
 
+                function size(d) {
+                    return d.size;
+                }
+
+                function logSize(d) {
+                    return Math.log(size(d));
+                }
+
                 function fontSize(d) {
-                    return d.size + 'px';
+                    return size(d) + "px";
+                }
+
+                function scaledSize(d) {
+                    return this._scale(logSize(d));
                 }
 
                 function fill(d, i) {
@@ -273,8 +317,6 @@ reimplementing the `text` and `fontSize` methods.
                         .selectAll('g')
                         .remove();
 
-                    console.log(words.length);
-
                     // Create the new cloud.
                     svg.append('g')
                         .attr(
@@ -285,6 +327,7 @@ reimplementing the `text` and `fontSize` methods.
                     .selectAll('text')
                         .data(words)
                     .enter().append('text')
+                        .classed("word", true)
                         .on('click', fireWordClicked.bind(this))
                         .transition(this.transition)
                         .style('font-family', this.font)
@@ -294,17 +337,26 @@ reimplementing the `text` and `fontSize` methods.
                         .text(text);
                 }
 
-                console.log(this.data);
+                // Creates a copy of the words
+                var words = this.data.map(words);
+
+                // Starting scale object. Log scale by default.
+                this._scale
+                    .domain([
+                        d3.min(this.data, logSize),
+                        d3.max(this.data, logSize)
+                    ])
+                    .range([30, 100]);
 
                 // (Re)create the word cloud if the data is not null.
                 if (this.data) {
-                    this.layout
+                    this._layout
                         .size([this.width, this.height])
-                        .words(this.data)
+                        .words(words)
                         .padding(this.padding)
                         .rotate(this.rotate)
                         .font(this.font)
-                        .fontSize(fontSize)
+                        .fontSize(scaledSize.bind(this))
                         .on('end', drawCallback.bind(this))
                         .start();
                 }

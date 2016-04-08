@@ -21,6 +21,16 @@
         and click words to see the callback working.
     </p>
     <template is="dom-bind" id="app">
+        <style type="text/css">
+            :host {
+                --poly-cloud-word-hover: {
+                    cursor: pointer;
+                    font-size: 1.2em;
+                    min-width: 500px;
+                    min-width: 500px;
+                }
+            }
+        </style>
         <poly-cloud url="demo.json" on-word-clicked="log" cursor="pointer"></poly-cloud>
     </template>
     <script type="text/javascript">
