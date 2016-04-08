@@ -3,10 +3,10 @@
     Copyright (c) 2015 Renato Utsch. All rights reserved.
     This code may only be used under the BSD style license found at http://renatoutsch.github.io/LICENSE.txt
 -->
-<link rel="import" href="../polymer/polymer.html">
-<link rel="import" href="../core-ajax/core-ajax.html">
+<link rel="import" href="../polymer/polymer.html" />
+<link rel="import" href="../iron-ajax/iron-ajax.html" />
 <script src="../d3/d3.min.js" type="text/javascript" charset="utf-8"></script>
-<script src="../d3-cloud/d3.layout.cloud.js" charset="utf-8"></script>
+<script src="../d3-cloud/build/d3.layout.cloud.js" charset="utf-8"></script>
 
 <!--
 This element is a polymer wrapper for the d3-cloud word cloud layout for d3.
@@ -23,25 +23,36 @@ Default structure of the json used by the poly-cloud:
         {"text": "Windows", "size": 20}
     ]
 
-You can customize the json structure by extending the poly-cloud and
-reimplementing the `text` and `fontSize` methods.
+You may change `rotate` function to generate random rotations.
 
 @element poly-cloud
 @blurb A Polymer wrapper for the d3-cloud word cloud layout for d3.
 @status beta
 @homepage http://renatoutsch.github.io/poly-cloud
 -->
-<polymer-element name="poly-cloud">
+<dom-module id="poly-cloud">
     <template>
-        <core-ajax url="{{url}}" params="{{params}}" handleAs="json"></core-ajax>
+        <style type="text/css">
+            #svg .word {
+                text-anchor: middle;
+                @apply(--poly-cloud-word);
+            }
 
-        <div style="width: {{width}}; height: {{height}}">
-            <svg id="svg" height="{{height}}" width="{{width}}"></svg>
-        </div>
+            #svg .word:hover {
+                @apply(--poly-cloud-word-hover);
+            }
+        </style>
+        <iron-ajax auto url="{{url}}" id="ajax" params="{{params}}"
+            on-response="_setData" handle-as="json"></iron-ajax>
+
+        <svg id="svg" viewBox="{{viewBox}}" preserveAspectRatio="xMidYMid meet">
+        </svg>
     </template>
     <script>
         Polymer({
-            publish: {
+            is: "poly-cloud",
+
+            properties: {
                 /**
                  * The `data` attribute sets the cloud's data.
                  * Ignored when the `url` attribute is used.
@@ -50,23 +61,28 @@ reimplementing the `text` and `fontSize` methods.
                  * @type Object (JSON)
                  * @default null
                  */
-                data: null,
+                data: {
+                    type: Object,
+                    observer: "drawCloud"
+                },
 
                 /**
                  * The `url` attribute specifies an url to get the JSON data
                  * that is used in the word cloud.
                  * You can use the `params` attribute to specify the parameters
-                 * in the GET request, in the same way the `core-ajax` element
+                 * in the GET request, in the same way the `iron-ajax` element
                  * works.
                  *
                  * When this attribute is present, the `data` attribute is
                  * ignored.
                  *
                  * @attribute url
-                 * @type string
+                 * @type String
                  * @default ''
                  */
-                url: '',
+                url: {
+                    type: String,
+                },
 
                 /**
                  * The `params` attribute specifies the parameters to the
@@ -76,201 +92,275 @@ reimplementing the `text` and `fontSize` methods.
                  * present.
                  *
                  * @attribute params
-                 * @type string (JSON)
+                 * @type String (JSON)
                  * @default ''
                  */
-                params: '',
+                params: {
+                    type: String,
+                    value: ""
+                },
 
                 /**
                  * The width of the word cloud, in px.
                  *
                  * @attribute width
-                 * @type number
+                 * @type Number
                  * @default 500
                  */
-                width: 500,
+                width: {
+                    type: Number,
+                    value: 500
+                },
 
                 /**
                  * The height of the word cloud, in px.
                  *
                  * @attribute height
-                 * @type number
+                 * @type Number
                  * @default 500
                  */
-                height: 500,
+                height: {
+                    type: Number,
+                    value: 500
+                },
 
                 /**
                  * Padding of the word cloud, in px.
                  *
                  * @attribute padding
-                 * @type number
+                 * @type Number
                  * @default 5
                  */
-                padding: 5,
-
-                /**
-                 * Font of the word cloud.
-                 *
-                 * @attribute font
-                 * @type string
-                 * @default "Impact"
-                 */
-                font: "Impact",
-
-                /**
-                 * Text anchor of the word cloud.
-                 *
-                 * @attribute textAnchor
-                 * @type string
-                 * @default "middle"
-                 */
-                textAnchor: "middle",
+                padding: {
+                    type: Number,
+                    value: 5
+                },
 
                 /**
                  * Colors of the word cloud.
                  *
                  * @attribute fill
                  * @type Object
-                 * @default d3.scale.category20()
+                 * @default d3.scale.category20
                  */
-                fill: d3.scale.category20(),
+                fill: {
+                    type: Object,
+                    value: d3.scale.category20
+                },
+
+                /**
+                 * Font of the word cloud.
+                 *
+                 * @attribute font
+                 * @type String
+                 * @default "Impact"
+                 */
+                font: {
+                    type: String,
+                    value: "Impact"
+                },
 
                 /**
                  * Transition duration when creating a new word cloud.
                  *
                  * @attribute transition
-                 * @type number
+                 * @type Number
                  * @default 300
                  */
-                transition: 300
-            },
+                transition: {
+                    type: Number,
+                    value: 300
+                },
 
-            /**
-             * Returns the text of the given datum.
-             *
-             * @method text
-             * @param {Object} d The datum to return its text.
-             */
-            text: function(d) {
-                return d.text;
-            },
+                /**
+                 * Function used to generate rotations to the words.
+                 * Just replace this function to create another rotation
+                 * patterns.
+                 *
+                 * Note: '~~' converts the number to integer.
+                 *
+                 * @attribute rotate
+                 * @type object
+                 * @default `() => { return -(180) / 8 }`
+                 *
+                 */
+                rotate: {
+                    type: Object,
+                    value: function () {
+                        return function () {
+                            return -(180) / 8;
+                        }
+                    }
+                },
 
-            /**
-             * Returns a random rotation for the word cloud words.
-             *
-             * @method rotate
-             */
-            rotate: function() {
-                return ~~(Math.random() * 2) * 90;
-            },
+                /**
+                 * d3-cloud layout engine.
+                 *
+                 * @attribute _layout
+                 * @type Object
+                 * @default d3.layout.cloud()
+                 */
+                _layout: {
+                    type: Object,
+                    value: function () {
+                        return d3.layout.cloud();
+                    }
+                },
 
-            /**
-             * Returns the font size of the given datum.
-             *
-             * @method fontSize
-             * @param {Object} d The datum to return its font size.
-             */
-            fontSize: function(d) {
-                return d.size;
-            },
 
-            /**
-             * Returns the transformation to put the word cloud in the correct
-             * position.
-             *
-             * @method transform
-             */
-            transform: function() {
-                return "translate(" + (this.width / 2) + "," + (this.height / 2)
-                    + ")";
-            },
-
-            created: function() {
-                this.layout = d3.layout.cloud();
-            },
-
-            /*
-             * Makes a request to this.url if it is not empty. Replace the data
-             * when it returns.
-             */
-            manageDataFromUrl: function() {
-                var self = this;
-
-                if(this.url) {
-                    // Get the data from the url and set it as the current data.
-                    var ajax = this.shadowRoot.querySelector('core-ajax');
-                    ajax.addEventListener('core-response', function(e) {
-                        self.url = ''; // Clean up the request.
-                        self.data = e.detail.response;
-                    });
-                    ajax.go();
+                /**
+                 * Used to scale the words properly.
+                 *
+                 * @attribute _scale
+                 * @type object
+                 * @default d3.scale.linear()
+                 */
+                _scale: {
+                    type: Object,
+                    value: function () {
+                        return d3.scale.linear();
+                    }
                 }
+            },
+
+            observers: [
+                "_sizeChanged(width, height)"
+            ],
+
+            /**
+             * Resizes the word cloud without redrawing it.
+             *
+             * @param  {Number} width
+             * @param  {Number} height
+             */
+            _sizeChanged: function (width, height) {
+                d3
+                    .select(this.$.svg)
+                    .attr("width", width)
+                    .attr("height", height);
+            },
+
+            /**
+             * Observers D3's changes to the world cloud and applies the
+             * styling properly.
+             */
+            ready: function() {
+                this.scopeSubtree(this.$.svg, true);
+            },
+
+            /**
+             * Sets data on response.
+             *
+             * @param {Object} event  event data
+             */
+            _setData: function(event) {
+                this.data = event.detail.response;
             },
 
             /*
              * Draws the word cloud with the data from this.data
              */
             drawCloud: function() {
-                var self = this;
+                function words(word) {
+                    return {
+                        text: word.text,
+                        size: word.size
+                    };
+                }
 
-                /*
-                 * Callback called at the end of the creation of the layout.
-                 */
-                var drawCallback = function(words) {
-                    var svg = d3.select(self.$.svg);
+                function fireWordClicked(detail) {
+                    this.fire('word-clicked', detail);
+                }
+
+                function size(d) {
+                    return d.size;
+                }
+
+                function logSize(d) {
+                    return Math.log(size(d));
+                }
+
+                function fontSize(d) {
+                    return size(d) + "px";
+                }
+
+                function scaledSize(d) {
+                    return this._scale(logSize(d));
+                }
+
+                function fill(d, i) {
+                    return this.fill(i);
+                }
+
+                function transform (d) {
+                    return 'translate('+[d.x, d.y]+')rotate('+d.rotate+')';
+                }
+
+                function text(d) {
+                    return d.text;
+                }
+
+                //Callback called at the end of the creation of the layout.
+                function drawCallback(words) {
+
+                    var svg = d3.select(this.$.svg);
+
+                    // Initial viewBox attribute. Used to resize without
+                    // redrawing everything.
+                    svg.attr(
+                        "viewBox",
+                        "0 0 " + this.width + " " + this.height + ""
+                    );
 
                     // Remove the old cloud if it exists to create a new one.
-                    svg.selectAll('g').remove();
+                    svg
+                        .selectAll('g')
+                        .remove();
 
                     // Create the new cloud.
-                    svg
-                        .attr('width', self.width)
-                        .attr('height', self.height)
-                    .append('g')
-                        .attr('transform', self.transform())
+                    svg.append('g')
+                        .attr(
+                            'transform',
+                            "translate(" + (this.width / 2) + ","
+                                + (this.height / 2) + ")"
+                        )
                     .selectAll('text')
                         .data(words)
                     .enter().append('text')
-                        .transition(self.transition)
-                        .style('font-size', function(d) {
-                            return self.fontSize(d) + 'px';
-                        })
-                        .style('font-family', self.font)
-                        .style('fill', function(d, i) { return self.fill(i); })
-                        .attr('text-anchor', self.textAnchor)
-                        .attr('transform', function(d) {
-                            return 'translate(' + [d.x, d.y] + ')rotate('
-                                    + d.rotate + ')';
-                        })
-                        .text(self.text);
-                };
+                        .classed("word", true)
+                        .on('click', fireWordClicked.bind(this))
+                        .transition(this.transition)
+                        .style('font-family', this.font)
+                        .style('font-size', fontSize)
+                        .style('fill', fill.bind(this))
+                        .attr('transform', transform)
+                        .text(text);
+                }
+
+                // Creates a copy of the words
+                var words = this.data.map(words);
+
+                // Starting scale object. Log scale by default.
+                this._scale
+                    .domain([
+                        d3.min(this.data, logSize),
+                        d3.max(this.data, logSize)
+                    ])
+                    .range([30, this.width / 4]);
 
                 // (Re)create the word cloud if the data is not null.
-                if(this.data) {
-                    this.layout
+                if (this.data) {
+                    this._layout
                         .size([this.width, this.height])
-                        .words(this.data)
+                        .words(words)
                         .padding(this.padding)
                         .rotate(this.rotate)
                         .font(this.font)
-                        .fontSize(this.fontSize)
-                        .on('end', drawCallback)
+                        .fontSize(scaledSize.bind(this))
+                        .on('end', drawCallback.bind(this))
                         .start();
                 }
-            },
-
-            ready: function() {
-                this.manageDataFromUrl();
-                this.drawCloud();
-            },
-
-            dataChanged: function(oldData, newData) {
-                this.drawCloud();
-            },
-
-            urlChanged: function(oldData, newData) {
-                this.manageDataFromUrl();
             }
         });
     </script>
-</polymer-element>
+</dom-module>
