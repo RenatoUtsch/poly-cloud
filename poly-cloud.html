@@ -346,7 +346,7 @@ You may change `rotate` function to generate random rotations.
                         d3.min(this.data, logSize),
                         d3.max(this.data, logSize)
                     ])
-                    .range([30, 100]);
+                    .range([30, this.width / 4]);
 
                 // (Re)create the word cloud if the data is not null.
                 if (this.data) {

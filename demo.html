@@ -13,6 +13,15 @@
     <script src="./bower_components/webcomponentsjs/webcomponents-lite.min.js"></script>
     <link rel="import" href="poly-cloud.html">
 
+    <style type="text/css" is="custom-style">
+        :root {
+            --poly-cloud-word-hover: {
+                cursor: pointer;
+                font-weight: bold;
+            }
+        }
+    </style>
+
 </head>
 <body unresolved>
 
@@ -21,17 +30,7 @@
         and click words to see the callback working.
     </p>
     <template is="dom-bind" id="app">
-        <style type="text/css">
-            :host {
-                --poly-cloud-word-hover: {
-                    cursor: pointer;
-                    font-size: 1.2em;
-                    min-width: 500px;
-                    min-width: 500px;
-                }
-            }
-        </style>
-        <poly-cloud url="demo.json" on-word-clicked="log" cursor="pointer"></poly-cloud>
+        <poly-cloud url="demo.json" on-word-clicked="log"></poly-cloud>
     </template>
     <script type="text/javascript">
         var app = document.getElementById("app");
